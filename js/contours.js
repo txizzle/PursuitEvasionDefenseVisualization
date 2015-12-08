@@ -157,6 +157,37 @@ var drag = d3.behavior.drag().on('dragstart', function() {
 //  updateEvader(currEvader);
 });
 
+//Drag behavior for Defender
+var def_drag = d3.behavior.drag().on('dragstart', function() {
+  defender.style('fill', 'red');
+}).on('drag', function() {
+  max_x = 1.0; //right
+  min_x = -1.0; //left
+  new_x = exScale.invert(d3.event.x);
+  new_y = eyScale.invert(d3.event.y);
+  if (new_x > max_x) {
+    console.log("Sending to right");
+    defenderX = 1.0;
+  } else if (new_x < min_x) {
+    console.log("Sending to left");
+    console.log(new_x);
+    console.log(min_x);
+    defenderX = -1.0;
+  } else {
+    console.log("Sending normally");
+    defenderX = new_x;
+  }
+  defender.attr('cx', exScale(defenderX)).attr('cy', eyScale(0.3));
+  catch_radius.attr('cx', exScale(defenderX)).attr('cy', eyScale(0.3));
+  //if we want to update contour here:
+  currDefender = getDefValfromX(defenderX);
+  updateDefender(currDefender);
+}).on('dragend', function() {
+  defender.style('fill', 'green');
+//  updateEvader(currEvader);
+});
+
+
 //Initialize SVG
 var svg = d3.select("#contour").append("svg").attr("width", width + margin.left +
   margin.right).attr("height", height + margin.top + margin.bottom).append(
@@ -200,6 +231,24 @@ var catch_radius = svg.append("circle").datum([evaderX, evaderY]).attr("cx",
 }).attr("r", height / 20).attr("fill", "none").attr("stroke", "black").attr(
   "stroke-width", "3px").attr("stroke-dasharray", "10 5");
 
+defenderX = getDefenderX(1);
+
+//Plot defender
+var defender = svg.append("circle").datum([defenderX, 0.3]).attr("cx", function(
+  d) {
+  return exScale(d[0]);
+}).attr("cy", function(d) {
+  return eyScale(d[1]);
+}).attr("r", 5).attr("fill", "green").call(def_drag);
+
+//Plot defender radius
+var defender_radius = svg.append("circle").datum([defenderX, 0.3]).attr("cx",
+  function(d) {
+    return exScale(d[0]);
+  }).attr("cy", function(d) {
+  return eyScale(d[1]);
+}).attr("r", height / 20 * 1.5).attr("fill", "none").attr("stroke", "black").attr(
+  "stroke-width", "3px").attr("stroke-dasharray", "10 5");
 
 function updateContour() {
   var currFile = "data_contours31/t" + currTime + "d" + currDefender + "z" + currEvader + "Data";
@@ -225,6 +274,9 @@ function updateContour() {
       line);
   });
 //  }
+
+  evaderX = getEvaderX(currEvader);
+  evaderY = getEvaderY(currEvader);
 
   //Plot evader path
   svg.append("path").datum([
@@ -253,6 +305,25 @@ function updateContour() {
   }).attr("r", height / 20).attr("fill", "none").attr("stroke", "black").attr(
     "stroke-width", "3px").attr("stroke-dasharray", "10 5").call(drag);
   
+  defenderX = getDefenderX(currDefender);
+
+  //Plot defender
+  defender = svg.append("circle").datum([defenderX, 0.3]).attr("cx", function(
+    d) {
+    return exScale(d[0]);
+  }).attr("cy", function(d) {
+    return eyScale(d[1]);
+  }).attr("r", 5).attr("fill", "green").call(def_drag);
+
+  //Plot defender radius
+  defender_radius = svg.append("circle").datum([defenderX, 0.3]).attr("cx",
+    function(d) {
+      return exScale(d[0]);
+    }).attr("cy", function(d) {
+    return eyScale(d[1]);
+  }).attr("r", height / 20 * 1.5).attr("fill", "none").attr("stroke", "black").attr(
+    "stroke-width", "3px").attr("stroke-dasharray", "10 5");
+
   //Plot obstacle
  svg.append("path").datum(getObstacle(parseInt(currTime))).attr("class",
     "obstacle").attr("d", objectLine);
@@ -318,6 +389,15 @@ function getObstacle(time) {
     [0.2, 0.6 + bt],
     [0.2, -0.6 + bt]
   ]);
+}
+
+function getDefValfromX(val) {
+  return Math.round(30.0*(val + 1.0)/2.0 + 1.0);
+}
+
+function getDefenderX(def) {
+  var d = (def - 1) / 30.0;
+  return d*2.0 - 1.0;
 }
 
 
